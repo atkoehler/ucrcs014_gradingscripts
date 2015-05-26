@@ -1,1 +1,1 @@
-# ucrcs14_gradingscripts
+# UCR CS014 Grading Scripts
