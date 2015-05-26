@@ -30,40 +30,53 @@ unzip "${zipLoc}" -d ${WORKING} &>/dev/null
 
 echo "Renaming and moving student files into student specific directories."
 # loop over all the .txt files in the working directory
-shopt -s nullglob
-example_file=$(ls -1 ${WORKING}/* | head -n 1)
+# shopt -s nullglob
+# example_file=$(ls -1 ${WORKING}/* | head -n 1)
 
-# get the file name
-file_name=$(basename "$example_file")
+# # get the file name
+# file_name=$(basename "$example_file")
 
-# split the file name on the underscore delimiter
-OLDIFS=$IFS
-IFS='_'
-file_array=( $file_name )
-IFS=$OLDIFS
+# # split the file name on the underscore delimiter
+# OLDIFS=$IFS
+# IFS='_'
+# file_array=( $file_name )
+# IFS=$OLDIFS
 
-first_remove="${file_array[0]}_"
-second_remove="${file_array[2]}_"
+# first_remove="${file_array[0]}_"
+# second_remove="${file_array[2]}_"
 
-rename "$first_remove" "" ${WORKING}/*
-rename "$second_remove" "" ${WORKING}/*
+
+
+# rename "${first_remove}" "" ${WORKING}/*
+# rename "${second_remove}" "" ${WORKING}/*
+# echo $first_remove
+# echo $second_remove
+# exit 1
 
 echo "Copying student files into files directory."
-# copy the student files into specific directories
-for f in ${WORKING}/*.txt; do
-    # get the file name
-    file_name=$(basename "$f")
-
-    # split the file name on the underscore delimiter
-    OLDIFS=$IFS
-    IFS='_'
-    file_array=( $file_name )
-    IFS=$OLDIFS
-
-    username="${file_array[0]}"
-    mkdir ${FILES}/${username}
-    cp ${WORKING}/${username}* ${FILES}/${username}
+for filename in ${WORKING}/*
+do
+    new_dir=$(ls -1 "$filename" | grep '[^_][A-Za-z]*[^_][0-9]\{3\}' -o)
+    mkdir ${FILES}/${new_dir} &>/dev/null  
+    
+    if [[ "$filename" =~ \.tar$  ]];
+    then
+        tar -xvf "$filename" -C $FILES/$new_dir/ &>/dev/null
+    elif [[ "$filename" =~ \.tar.gz$  ]];
+    then
+        tar -zxvf "$filename" -C $FILES/$new_dir/ &>/dev/null
+    elif [[ "$filename" =~ \.tgz$  ]];
+    then
+        tar -zxvf "$filename" -C $FILES/$new_dir/ &>/dev/null    
+    elif [[ "$filename" =~ \.h|.H$  ]];
+    then
+        mv "$filename" $FILES/$new_dir/assn.hpp &>/dev/null
+    else
+        mv "$filename" $FILES/$new_dir/ &>/dev/null
+    fi
 done
+
+
 
 rm -rf ${WORKING}
 
@@ -90,10 +103,12 @@ then
     then
         exit 1
     fi
+else
+    rm ${OUTPUT}/errant_submissions.txt
 fi
 
 
-echo "creating marking files"
+echo "Creating marking files."
 
 
 rm -rf ${FILES}/*/
