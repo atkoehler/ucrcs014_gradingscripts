@@ -3,7 +3,9 @@
 FILES="files"
 WORKING="working"
 OUTPUT="output"
-STOP_ON_ERROR=1
+MARKING_KEY="marking"
+STOP_ON_ERROR=0
+DIVIDER="############################################################"
 
 if [ "$1" == "--help" ]
 then
@@ -70,7 +72,7 @@ do
         tar -zxvf "$filename" -C $FILES/$new_dir/ &>/dev/null    
     elif [[ "$filename" =~ \.h|.H$  ]];
     then
-        mv "$filename" $FILES/$new_dir/assn.hpp &>/dev/null
+        mv "$filename" $FILES/$new_dir/ &>/dev/null
     else
         mv "$filename" $FILES/$new_dir/ &>/dev/null
     fi
@@ -108,7 +110,87 @@ else
 fi
 
 
-echo "Creating marking files."
+echo "Creating marking files for each student submission."
+for d in ${FILES}/*/; do
+    # generate a file called username_marking_timestamp.txt
+    username=$(basename ${d})
+
+    # grab text file for submission
+    textfilepath=$(ls ${d}*.txt)
+    
+    # get the file name
+    file_name=$(basename "$textfilepath")
+
+    # split the file name on the underscore delimiter
+    OLDIFS=$IFS
+    IFS='_'
+    file_array=( $file_name )
+    IFS=$OLDIFS
+    
+    pieces=${#file_array[@]}
+    timestamp=${file_array[$pieces-1]}
+    timestamp="${timestamp%.*}"
+    assignment_name=${file_array[0]}
+
+    marking_file="${username}_${MARKING_KEY}_${timestamp}.txt"
+    echo -ne "" > ${OUTPUT}/student_results/${marking_file}
+
+    # append file information to the top of the marking file
+    echo ${DIVIDER} >> ${OUTPUT}/student_results/${marking_file}
+    echo "# " >> ${OUTPUT}/student_results/${marking_file}
+    echo "# Username:   $username" >> ${OUTPUT}/student_results/${marking_file}
+    echo "# Timestamp:  $timestamp" >> ${OUTPUT}/student_results/${marking_file}
+    echo "# Assignment: $assignment_name" >> ${OUTPUT}/student_results/${marking_file}
+    echo "# Files In Submission: " >> ${OUTPUT}/student_results/${marking_file}
+    for f in ${d}*; do
+        fname=$(basename "${f}")
+        echo "#    $fname" >> ${OUTPUT}/student_results/${marking_file}
+    done
+    echo "# " >> ${OUTPUT}/student_results/${marking_file}
+    echo ${DIVIDER} >> ${OUTPUT}/student_results/${marking_file}
+
+    # append contents found in header file
+    echo ${DIVIDER} >> ${OUTPUT}/student_results/${marking_file}
+    echo "# " >> ${OUTPUT}/student_results/${marking_file}
+    echo "# Student .H code: " >> ${OUTPUT}/student_results/${marking_file}
+    echo "" >> ${OUTPUT}/student_results/${marking_file}
+
+    # TODO: handle more than one header?
+    header_file=$(find ${d} -regex '.*/.*\.\(h\|H\|hpp\|HPP\)$')
+    if [ "$header_file" = "" ]
+    then
+        echo "NO FILE FOUND" >> ${OUTPUT}/student_results/${marking_file}
+
+    else
+        cat "${header_file}" >> ${OUTPUT}/student_results/${marking_file}
+        echo "" >> ${OUTPUT}/student_results/${marking_file}
+    fi
+    echo "" >> ${OUTPUT}/student_results/${marking_file}
+    echo ${DIVIDER} >> ${OUTPUT}/student_results/${marking_file}
 
 
+    # append compilation results with harness
+    echo ${DIVIDER} >> ${OUTPUT}/student_results/${marking_file}
+    echo "# " >> ${OUTPUT}/student_results/${marking_file}
+    echo "# Compilation results with harness: " >> ${OUTPUT}/student_results/${marking_file}
+
+
+    echo "" >> ${OUTPUT}/student_results/${marking_file}
+    echo ${DIVIDER} >> ${OUTPUT}/student_results/${marking_file}
+
+
+    # append compilation results with student provided .cpp
+    echo ${DIVIDER} >> ${OUTPUT}/student_results/${marking_file}
+    echo "# " >> ${OUTPUT}/student_results/${marking_file}
+    echo "# Compilation results with student provided file: " >> ${OUTPUT}/student_results/${marking_file}
+
+    
+    echo "" >> ${OUTPUT}/student_results/${marking_file}
+    echo ${DIVIDER} >> ${OUTPUT}/student_results/${marking_file}
+
+    # append execution result
+done
+
+
+# clean up by removing unpacked files
 rm -rf ${FILES}/*/
