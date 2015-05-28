@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SOLUTION="solution"
+SOLUTION="harness"
 FILES="files"
 WORKING="working"
 OUTPUT="output"
