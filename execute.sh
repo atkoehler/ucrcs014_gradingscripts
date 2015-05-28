@@ -37,7 +37,9 @@ echo "Renaming and moving student files into student specific directories."
 echo "Copying student files into files directory."
 for filename in ${WORKING}/*
 do
-    new_dir=$(ls -1 "$filename" | grep '[^_][A-Za-z]*[^_][0-9]\{3\}' -o)
+    new_dir=( $(ls -1 "$filename" | grep '[^_][A-Za-z]*[^_][0-9]\{3\}' -o) )
+    new_dir=${new_dir[0]}
+    echo "${new_dir}"
     mkdir ${FILES}/${new_dir} &>/dev/null  
     
     if [[ "$filename" =~ \.tar$  ]];
